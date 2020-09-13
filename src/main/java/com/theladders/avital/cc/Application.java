@@ -16,7 +16,8 @@ public class Application {
     public static final String APPLY = "apply";
     public static final String J_REQ = "JReq";
     public static final String ATS = "ATS";
-    private final HashMap<String, List<List<String>>> jobs = new HashMap<>();
+    public static final String APPLIED = "applied";
+    private Jobs jobs = new Jobs();
     private final HashMap<String, List<List<String>>> applied = new HashMap<>();
     private final List<List<String>> failedApplications = new ArrayList<>();
 
@@ -62,13 +63,12 @@ public class Application {
     }
 
     private void addNotApply(String employerName, String jobName, String jobType) {
-        List<List<String>> alreadyPublished = jobs.getOrDefault(employerName, new ArrayList<>());
-
+        List<List<String>> alreadyPublished = jobs.getElement(employerName);
         alreadyPublished.add(new ArrayList<String>() {{
             add(jobName);
             add(jobType);
         }});
-        jobs.put(employerName, alreadyPublished);
+        jobs.put(new Job(employerName, alreadyPublished));
     }
 
 
@@ -120,11 +120,14 @@ public class Application {
     }
 
     public List<List<String>> getJobs(String employerName, String type) {
-        if (type.equals("applied")) {
+        if (isApplied(type)) {
             return applied.get(employerName);
         }
+        return jobs.getElement(employerName);
+    }
 
-        return jobs.get(employerName);
+    private boolean isApplied(String type) {
+        return type.equals(APPLIED);
     }
 
     public List<String> findApplicants(String jobName, String employerName) {
