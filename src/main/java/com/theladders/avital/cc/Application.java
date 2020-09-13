@@ -11,69 +11,35 @@ import java.util.stream.Collectors;
 import static java.util.Map.Entry;
 
 public class Application {
-    public static final String PUBLISH = "publish";
-    public static final String SAVE = "save";
-    public static final String APPLY = "apply";
-    public static final String J_REQ = "JReq";
-    public static final String ATS = "ATS";
-    public static final String APPLIED = "applied";
-    private Jobs jobs = new Jobs();
+    private final Jobs jobsTemp = new Jobs();
     private final HashMap<String, List<List<String>>> applied = new HashMap<>();
     private final List<List<String>> failedApplications = new ArrayList<>();
 
     public void execute(String command, String employerName, String jobName, String jobType, String jobSeekerName, String resumeApplicantName, LocalDate applicationTime) throws NotSupportedJobTypeException, RequiresResumeForJReqJobException, InvalidResumeException {
-        publishCommand(command, employerName, jobName, jobType);
-        saveCommand(command, employerName, jobName, jobType);
+        jobsTemp.publishCommand(command, employerName, jobName, jobType);
+        jobsTemp.saveCommand(command, employerName, jobName, jobType);
         applyCommand(command, employerName, jobName, jobType, jobSeekerName, resumeApplicantName, applicationTime);
     }
 
-    private void publishCommand(String command, String employerName, String jobName, String jobType) throws NotSupportedJobTypeException {
-        if (!isPublish(command)) {
-            return;
-        }
-        if (isNotJReqAndNotATS(jobType)) {
-            throw new NotSupportedJobTypeException();
-        }
-
-        addNotApply(employerName, jobName, jobType);
-
-    }
-
-    private void saveCommand(String command, String employerName, String jobName, String jobType) {
-        if (!isSave(command)) {
-            return;
-        }
-        addNotApply(employerName, jobName, jobType);
-    }
-
     private void applyCommand(String command, String employerName, String jobName, String jobType, String jobSeekerName, String resumeApplicantName, LocalDate applicationTime) throws RequiresResumeForJReqJobException, InvalidResumeException {
-        if (!isApply(command)) {
+        if (command != "apply") {
             return;
         }
-        if (isJReqAndResumeIsNull(jobType, resumeApplicantName)) {
-            addFailedApplication(employerName, jobName, jobType, applicationTime);
+        if (jobType.equals("JReq") && resumeApplicantName == null) {
+            addFailApplication(employerName, jobName, jobType, applicationTime);
             throw new RequiresResumeForJReqJobException();
         }
 
-        if (isJReqAndResumeNotJobSeeker(jobType, jobSeekerName, resumeApplicantName)) {
+        if (jobType.equals("JReq") && !resumeApplicantName.equals(jobSeekerName)) {
             throw new InvalidResumeException();
         }
         addApply(employerName, jobName, jobType, jobSeekerName, applicationTime);
 
     }
 
-    private void addNotApply(String employerName, String jobName, String jobType) {
-        List<List<String>> alreadyPublished = jobs.getElement(employerName);
-        alreadyPublished.add(new ArrayList<String>() {{
-            add(jobName);
-            add(jobType);
-        }});
-        jobs.put(new Job(employerName, alreadyPublished));
-    }
-
-
     private void addApply(String employerName, String jobName, String jobType, String jobSeekerName, LocalDate applicationTime) {
         List<List<String>> saved = this.applied.getOrDefault(jobSeekerName, new ArrayList<>());
+
         saved.add(new ArrayList<String>() {{
             add(jobName);
             add(jobType);
@@ -83,29 +49,7 @@ public class Application {
         applied.put(jobSeekerName, saved);
     }
 
-    private boolean isNotJReqAndNotATS(String jobType) {
-        return !jobType.equals(J_REQ) && !jobType.equals(ATS);
-    }
-
-    private boolean isPublish(String command) {
-        return command == PUBLISH;
-    }
-
-
-    private boolean isSave(String command) {
-        return command == SAVE;
-    }
-
-
-    private boolean isJReqAndResumeNotJobSeeker(String jobType, String jobSeekerName, String resumeApplicantName) {
-        return jobType.equals(J_REQ) && !resumeApplicantName.equals(jobSeekerName);
-    }
-
-    private boolean isJReqAndResumeIsNull(String jobType, String resumeApplicantName) {
-        return jobType.equals(J_REQ) && resumeApplicantName == null;
-    }
-
-    private void addFailedApplication(String employerName, String jobName, String jobType, LocalDate applicationTime) {
+    private void addFailApplication(String employerName, String jobName, String jobType, LocalDate applicationTime) {
         List<String> failedApplication = new ArrayList<String>() {{
             add(jobName);
             add(jobType);
@@ -115,19 +59,12 @@ public class Application {
         failedApplications.add(failedApplication);
     }
 
-    private boolean isApply(String command) {
-        return command == APPLY;
-    }
 
     public List<List<String>> getJobs(String employerName, String type) {
-        if (isApplied(type)) {
+        if (type.equals("applied")) {
             return applied.get(employerName);
         }
-        return jobs.getElement(employerName);
-    }
-
-    private boolean isApplied(String type) {
-        return type.equals(APPLIED);
+        return jobsTemp.findBy(employerName);
     }
 
     public List<String> findApplicants(String jobName, String employerName) {
@@ -153,8 +90,7 @@ public class Application {
                 }
             }
             return result;
-        }
-        if (jobName == null && to == null) {
+        } else if (jobName == null && to == null) {
             List<String> result = new ArrayList<String>() {
             };
             Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
@@ -169,8 +105,7 @@ public class Application {
                 }
             }
             return result;
-        }
-        if (jobName == null && from == null) {
+        } else if (jobName == null && from == null) {
             List<String> result = new ArrayList<String>() {
             };
             Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
@@ -186,8 +121,7 @@ public class Application {
             }
             return result;
 
-        }
-        if (jobName == null) {
+        } else if (jobName == null) {
             List<String> result = new ArrayList<String>() {
             };
             Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
@@ -202,8 +136,7 @@ public class Application {
             }
             return result;
 
-        }
-        if (to != null) {
+        } else if (to != null) {
             List<String> result = new ArrayList<String>() {
             };
             Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
@@ -217,21 +150,21 @@ public class Application {
                 }
             }
             return result;
-        }
-        List<String> result = new ArrayList<String>() {
-        };
-        Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Entry<String, List<List<String>>> set = iterator.next();
-            String applicant = set.getKey();
-            List<List<String>> jobs = set.getValue();
-            boolean isAppliedThisDate = jobs.stream().anyMatch(job -> job.get(0).equals(jobName) && !from.isAfter(LocalDate.parse(job.get(2), DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
-            if (isAppliedThisDate) {
-                result.add(applicant);
+        } else {
+            List<String> result = new ArrayList<String>() {
+            };
+            Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Entry<String, List<List<String>>> set = iterator.next();
+                String applicant = set.getKey();
+                List<List<String>> jobs = set.getValue();
+                boolean isAppliedThisDate = jobs.stream().anyMatch(job -> job.get(0).equals(jobName) && !from.isAfter(LocalDate.parse(job.get(2), DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+                if (isAppliedThisDate) {
+                    result.add(applicant);
+                }
             }
+            return result;
         }
-        return result;
-
     }
 
     public String export(String type, LocalDate date) {
