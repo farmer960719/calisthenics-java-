@@ -5,6 +5,8 @@ import java.util.List;
 
 public class Job {
 
+    public static final String J_REQ = "JReq";
+    public static final String ATS = "ATS";
     private final String jobName;
     private final String jobType;
 
@@ -13,11 +15,17 @@ public class Job {
         this.jobType = jobType;
     }
 
-    public List<String> asList() {
-        return new ArrayList<>() {{
+    public List<String> asString() {
+        return new ArrayList<String>() {{
             add(jobName);
             add(jobType);
         }};
 
+    }
+
+    public void vailType() throws NotSupportedJobTypeException {
+        if (!jobType.equals(J_REQ) && !jobType.equals(ATS)) {
+            throw new NotSupportedJobTypeException();
+        }
     }
 }

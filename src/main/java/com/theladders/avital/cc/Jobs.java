@@ -1,44 +1,34 @@
 package com.theladders.avital.cc;
 
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class Jobs {
 
-    private final HashMap<String, List<List<String>>> jobs = new HashMap<>();
-    private final JobList jobList = new JobList();
+    public static final String SAVE = "save";
+    public static final String PUBLISH = "publish";
+    private final HashMap<Object, JobList> jobs = new HashMap<>();
+
 
     public List<List<String>> findBy(String employerName) {
-        return jobs.get(employerName);
+        return jobs.get(employerName).asList();
     }
 
-    void publishJob(String command, String employerName, String jobName, String jobType) throws NotSupportedJobTypeException {
-        if (command != "publish") {
+    void publishJob(String command, String employerName, Job job) throws NotSupportedJobTypeException {
+        if (command != PUBLISH) {
             return;
         }
-        if (!jobType.equals("JReq") && !jobType.equals("ATS")) {
-            throw new NotSupportedJobTypeException();
-        }
-
-        List<List<String>> alreadyPublished = jobs.getOrDefault(employerName, new ArrayList<>());
-
-        alreadyPublished.add(new ArrayList<>() {{
-            add(jobName);
-            add(jobType);
-        }});
-        jobs.put(employerName, alreadyPublished);
+        job.vailType();
+        jobs.put(employerName, JobList.storeJob(job));
     }
 
     void saveJob(String command, String employerName, Job job) {
-        if (command != "save") {
+        if (command != SAVE) {
             return;
         }
-        jobList.jobList= jobs.getOrDefault(employerName, new ArrayList<>());
-        jobs.put(employerName, jobList.single(job));
+        jobs.put(employerName, JobList.storeJob(job));
+
     }
-    void saveCommand(String command, String employerName, String jobName, String jobType) {
-       saveJob(command,employerName,new Job(jobName,jobType));
-    }
+
 }
