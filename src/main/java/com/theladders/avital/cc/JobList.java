@@ -4,16 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JobList {
-    public List<List<String>> jobList=new ArrayList<>();
 
-    public JobList(String jobName, String jobType) {
-        jobList.add(new ArrayList<String>() {{
-            add(jobName);
-            add(jobType);
-        }});
+    List<List<String>> jobList;
+
+    public List<List<String>> single(Job job) {
+        jobList.add(job.asList());
+        return jobList;
     }
 
-    public List<String> list() {
-        return jobList.get(0);
-    }
 }

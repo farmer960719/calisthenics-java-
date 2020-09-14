@@ -16,7 +16,7 @@ public class Application {
     private final List<List<String>> failedApplications = new ArrayList<>();
 
     public void execute(String command, String employerName, String jobName, String jobType, String jobSeekerName, String resumeApplicantName, LocalDate applicationTime) throws NotSupportedJobTypeException, RequiresResumeForJReqJobException, InvalidResumeException {
-        jobsTemp.publishCommand(command, employerName, jobName, jobType);
+        jobsTemp.publishJob(command, employerName, jobName, jobType);
         jobsTemp.saveCommand(command, employerName, jobName, jobType);
         applyCommand(command, employerName, jobName, jobType, jobSeekerName, resumeApplicantName, applicationTime);
     }
