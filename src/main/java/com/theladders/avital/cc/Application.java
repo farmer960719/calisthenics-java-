@@ -13,8 +13,9 @@ public class Application {
     public static final String PUBLISH = "publish";
     public static final String J_REQ = "JReq";
     public static final String ATS = "ATS";
-    private final HashMap<String, List<List<String>>> jobs = new HashMap<>();
+    private Jobs jobs =new Jobs();
     private final HashMap<String, List<List<String>>> applied = new HashMap<>();
+    private Applied appliedTemp=new Applied();
     private final List<List<String>> failedApplications = new ArrayList<>();
 
     public void execute(String command, String employerName, String jobName, String jobType, String jobSeekerName, String resumeApplicantName, LocalDate applicationTime) throws NotSupportedJobTypeException, RequiresResumeForJReqJobException, InvalidResumeException {
@@ -57,15 +58,14 @@ public class Application {
     }
 
     private void addApply(String employerName, String jobName, String jobType, String jobSeekerName, LocalDate applicationTime) {
-        List<List<String>> saved = this.applied.getOrDefault(jobSeekerName, new ArrayList<>());
-
+        List<List<String>> saved = appliedTemp.getElement(employerName);
         saved.add(new ArrayList<String>() {{
             add(jobName);
             add(jobType);
             add(applicationTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             add(employerName);
         }});
-        applied.put(jobSeekerName, saved);
+        appliedTemp.replace(new Job(jobSeekerName, saved));
     }
 
     private void addFailApplication(String employerName, String jobName, String jobType, LocalDate applicationTime) {
@@ -79,29 +79,30 @@ public class Application {
     }
 
     private void addSave(String employerName, String jobName, String jobType) {
-        List<List<String>> saved = jobs.getOrDefault(employerName, new ArrayList<>());
+        List<List<String>> saved = jobs.getElement(employerName);
         saved.add(new ArrayList<String>() {{
             add(jobName);
             add(jobType);
         }});
-        jobs.put(employerName, saved);
+
+        jobs.put(new Job(employerName,saved));
     }
 
     private void addPublish(String employerName, String jobName, String jobType) {
-        List<List<String>> alreadyPublished = jobs.getOrDefault(employerName, new ArrayList<>());
+        List<List<String>> alreadyPublished = jobs.getElement(employerName);
         alreadyPublished.add(new ArrayList<String>() {{
             add(jobName);
             add(jobType);
         }});
-        jobs.put(employerName, alreadyPublished);
+        jobs.put(new Job(employerName, alreadyPublished));
     }
 
     public List<List<String>> getJobs(String employerName, String type) {
         if (type.equals("applied")) {
-            return applied.get(employerName);
+            return appliedTemp.getElement(employerName);
         }
 
-        return jobs.get(employerName);
+        return jobs.getElement(employerName);
     }
 
     public List<String> findApplicants(String jobName, String employerName) {
@@ -135,11 +136,11 @@ public class Application {
     private List<String> toIsNull(String jobName, LocalDate from) {
         List<String> result = new ArrayList<String>() {
         };
-        Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Entry<String, List<List<String>>> set = iterator.next();
-            String applicant = set.getKey();
-            List<List<String>> jobs = set.getValue();
+        Iterator<Job> iteratorTemp = this.appliedTemp.applied.iterator();
+        while (iteratorTemp.hasNext()) {
+            Job set = iteratorTemp.next();
+            String applicant = set.name;
+            List<List<String>> jobs = set.list;
             boolean isAppliedThisDate = jobs.stream().anyMatch(job -> job.get(0).equals(jobName) && !from.isAfter(LocalDate.parse(job.get(2), DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
             if (isAppliedThisDate) {
                 result.add(applicant);
@@ -152,6 +153,16 @@ public class Application {
         List<String> result = new ArrayList<String>() {
         };
         Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
+        Iterator<Job> iteratorTemp = this.appliedTemp.applied.iterator();
+        while (iteratorTemp.hasNext()) {
+            Job set = iteratorTemp.next();
+            String applicant = set.name;
+            List<List<String>> jobs = set.list;
+            boolean isAppliedThisDate = jobs.stream().anyMatch(job -> job.get(0).equals(jobName) && !to.isBefore(LocalDate.parse(job.get(2), DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+            if (isAppliedThisDate) {
+                result.add(applicant);
+            }
+        }
         while (iterator.hasNext()) {
             Entry<String, List<List<String>>> set = iterator.next();
             String applicant = set.getKey();

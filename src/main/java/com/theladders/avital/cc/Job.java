@@ -1,11 +1,10 @@
 package com.theladders.avital.cc;
 
-import java.time.LocalDate;
 import java.util.List;
 
 public class Job {
-    String name;
-    List<List<String>> list;
+    public String name;
+    public List<List<String>> list;
 
     public Job(String name, List<List<String>> list) {
         this.name = name;
@@ -13,5 +12,13 @@ public class Job {
     }
 
     public Job() {
+    }
+
+    Integer size(){
+        return list.size();
+    }
+
+    boolean isEqualEmployerName(String employerName) {
+        return name == employerName;
     }
 }
