@@ -19,4 +19,10 @@ public class Job {
     public String getType() {
         return type.getName();
     }
+
+    void isValidType() throws NotSupportedJobTypeException {
+        if (!getType().equals(JobType.J_REQ) && !getType().equals(JobType.ATS)) {
+            throw new NotSupportedJobTypeException();
+        }
+    }
 }

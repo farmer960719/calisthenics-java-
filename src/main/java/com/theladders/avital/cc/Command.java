@@ -6,4 +6,5 @@ public class Command {
     public static final String SAVE = "save";
     public static final String APPLY = "apply";
 
+    public static final String APPLIED = "applied";
 }

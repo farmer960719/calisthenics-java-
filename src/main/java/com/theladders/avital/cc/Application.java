@@ -2,84 +2,83 @@ package com.theladders.avital.cc;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static java.util.Map.Entry;
 
 public class Application {
-    private final HashMap<String, List<List<String>>> jobs = new HashMap<>();
+    private final Jobs jobs = new Jobs();
     private final HashMap<String, List<List<String>>> applied = new HashMap<>();
     private final List<List<String>> failedApplications = new ArrayList<>();
+    private final Applied appliedTemp = new Applied();
 
     public void execute(String command, Employer employer, Job job, JobSeeker jobSeeker, Resume resume, LocalDate applicationTime) throws NotSupportedJobTypeException, RequiresResumeForJReqJobException, InvalidResumeException {
         if (command == Command.PUBLISH) {
-            publishJob(new Employer(employer.getName()),new Job(job.getName(), job.getType()));
+            jobs.publishJob(employer, job);
         }
         if (command == Command.SAVE) {
-            saveJob(new Employer(employer.getName()),new Job(job.getName(), job.getType()));
+            jobs.saveJob(employer, job);
         }
         if (command == Command.APPLY) {
-            applyJob(new Employer(employer.getName()),new Job(job.getName(), job.getType()),new JobSeeker(jobSeeker.getName()),new Resume(resume.getName()), applicationTime);
+            applyJob(employer, job, jobSeeker, resume, applicationTime);
         }
     }
+
     private void applyJob(Employer employer, Job job, JobSeeker jobSeeker, Resume resume, LocalDate applicationTime) throws RequiresResumeForJReqJobException, InvalidResumeException {
         if (job.getType().equals(JobType.J_REQ) && resume.getName() == null) {
-            List<String> failedApplication = new ArrayList<String>() {{
-                add(job.getName());
-                add(job.getType());
-                add(applicationTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-                add(employer.getName());
-            }};
-            failedApplications.add(failedApplication);
+            addFailedApplication(employer, job, applicationTime);
             throw new RequiresResumeForJReqJobException();
         }
 
         if (job.getType().equals(JobType.J_REQ) && !resume.getName().equals(jobSeeker.getName())) {
             throw new InvalidResumeException();
         }
-        List<List<String>> saved = this.applied.getOrDefault(jobSeeker.getName(), new ArrayList<>());
+        addApply(employer, job, jobSeeker, applicationTime);
+    }
 
+    private void addApply(Employer employer, Job job, JobSeeker jobSeeker, LocalDate applicationTime) {
+        List<List<String>> saved = applied.getOrDefault(jobSeeker.getName(),new ArrayList<>());
         saved.add(new ArrayList<String>() {{
             add(job.getName());
             add(job.getType());
             add(applicationTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
             add(employer.getName());
         }});
+        appliedTemp.addApply(employer,job,jobSeeker, applicationTime);
         applied.put(jobSeeker.getName(), saved);
     }
 
-    private void saveJob(Employer employer, Job job) {
-        List<List<String>> saved = jobs.getOrDefault(employer.getName(), new ArrayList<>());
-
-        saved.add(new ArrayList<String>() {{
+    private void addFailedApplication(Employer employer, Job job, LocalDate applicationTime) {
+        List<String> failedApplication = new ArrayList<String>() {{
             add(job.getName());
             add(job.getType());
-        }});
-        jobs.put(employer.getName(), saved);
-    }
-
-    private void publishJob(Employer employer, Job job) throws NotSupportedJobTypeException {
-        if (!job.getType().equals(JobType.J_REQ) && !job.getType().equals(JobType.ATS)) {
-            throw new NotSupportedJobTypeException();
-        }
-
-        List<List<String>> alreadyPublished = jobs.getOrDefault(employer.getName(), new ArrayList<>());
-
-        alreadyPublished.add(new ArrayList<String>() {{
-            add(job.getName());
-            add(job.getType());
-        }});
-        jobs.put(employer.getName(), alreadyPublished);
+            add(applicationTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+            add(employer.getName());
+        }};
+        failedApplications.add(failedApplication);
     }
 
     public List<List<String>> getJobs(String employerName, String type) {
-        if (type.equals("applied")) {
-            return applied.get(employerName);
+        if (type.equals(Command.APPLIED)) {
+
+            return getAppliedJobs(employerName);
         }
 
-        return jobs.get(employerName);
+        return getJobs(employerName);
     }
+
+    private List<List<String>> getJobs(String employerName) {
+        return jobs.getJobs(employerName);
+    }
+
+    private List<List<String>> getAppliedJobs(String employerName) {
+        return appliedTemp.getAppliedJobs(employerName);
+    }
+
 
     public List<String> findApplicants(String jobName, String employerName) {
         return findApplicants(jobName, employerName, null);
