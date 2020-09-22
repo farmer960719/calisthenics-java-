@@ -1,5 +1,8 @@
 package com.theladders.avital.cc;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Job {
     private String name;
     private JobType type;
@@ -10,7 +13,8 @@ public class Job {
         this.type = new JobType(type);
     }
 
-
+    
+    
     public String getName() {
         return name;
     }
@@ -24,5 +28,12 @@ public class Job {
         if (!getType().equals(JobType.J_REQ) && !getType().equals(JobType.ATS)) {
             throw new NotSupportedJobTypeException();
         }
+    }
+
+    public static List<String> asString(Job job) {
+        return new ArrayList<String>(){{
+            add(job.getName());
+            add(job.getType());
+        }};
     }
 }

@@ -12,8 +12,6 @@ public class JobType {
     }
 
     public String getName() {
-
-
         return name;
     }
 }
