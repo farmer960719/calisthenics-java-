@@ -4,36 +4,36 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Job {
+    private String name;
+    private JobType type;
 
-    public static final String J_REQ = "JReq";
-    public static final String ATS = "ATS";
-    private final String jobName;
-    private final String jobType;
 
-    public Job(String jobName, String jobType) {
-        this.jobName = jobName;
-        this.jobType = jobType;
+    public Job(String name, String type) {
+        this.name = name;
+        this.type = new JobType(type);
     }
 
-    public List<String> asString() {
-        return new ArrayList<String>() {{
-            add(jobName);
-            add(jobType);
-        }};
-
+    
+    
+    public String getName() {
+        return name;
     }
 
-    public String getJobType() {
-        return jobType;
+
+    public String getType() {
+        return type.getName();
     }
 
-    public void vailType() throws NotSupportedJobTypeException {
-        if (!jobType.equals(J_REQ) && !jobType.equals(ATS)) {
+    void isValidType() throws NotSupportedJobTypeException {
+        if (!getType().equals(JobType.J_REQ) && !getType().equals(JobType.ATS)) {
             throw new NotSupportedJobTypeException();
         }
     }
 
-    public String getJobName() {
-        return jobName;
+    public static List<String> asString(Job job) {
+        return new ArrayList<String>(){{
+            add(job.getName());
+            add(job.getType());
+        }};
     }
 }
