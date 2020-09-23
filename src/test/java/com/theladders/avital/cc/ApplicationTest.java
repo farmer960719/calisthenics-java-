@@ -313,7 +313,7 @@ public class ApplicationTest {
         application.execute("apply",new Employer(employerAlibaba),new Job(juniorJavaDevJob, "ATS"),new JobSeeker(jobSeekerLam),new Resume(null), LocalDate.parse("1999-12-20"));
         application.execute("apply",new Employer(employerAlibaba),new Job(seniorJavaDevJob, "JReq"),new JobSeeker(jobSeekerLam),new Resume(lamResume), LocalDate.parse("1999-12-20"));
 
-        String csv = application.export("csv", LocalDate.parse("1999-12-20"));
+        String csv = application.appliedTemp.export("csv", LocalDate.parse("1999-12-20"));
         String expected = "Employer,Job,Job Type,Applicants,Date" + "\n" + "Alibaba,Java开发,ATS,Ho,1999-12-20" + "\n" + "Alibaba,Java开发,ATS,Lam,1999-12-20" + "\n" + "Alibaba,高级Java开发,JReq,Lam,1999-12-20" + "\n" + "Alibaba,高级Java开发,JReq,Jacky,1999-12-20" + "\n";
 
         assertThat(csv, is(expected));
@@ -338,7 +338,7 @@ public class ApplicationTest {
         application.execute("apply",new Employer(employerAlibaba),new Job(juniorJavaDevJob, "ATS"),new JobSeeker(jobSeekerLam),new Resume(null), LocalDate.parse("1999-12-20"));
         application.execute("apply",new Employer(employerAlibaba),new Job(seniorJavaDevJob, "JReq"),new JobSeeker(jobSeekerLam),new Resume(lamResume), LocalDate.parse("1999-12-20"));
 
-        String csv = application.export("html", LocalDate.parse("1999-12-20"));
+        String csv = application.appliedTemp.export("html", LocalDate.parse("1999-12-20"));
         String expected = "<!DOCTYPE html>"
                 + "<body>"
                 + "<table>"
@@ -406,8 +406,8 @@ public class ApplicationTest {
         application.execute("apply",new Employer(employerAlibaba),new Job(juniorJavaDevJob, "ATS"),new JobSeeker(jobSeekerHo),new Resume(null), LocalDate.now());
         application.execute("apply",new Employer(employerTencent),new Job(juniorJavaDevJob, "ATS"),new JobSeeker(jobSeekerHo),new Resume(null), LocalDate.now());
 
-        assertThat(application.getSuccessfulApplications(employerAlibaba, seniorJavaDevJob), is(2));
-        assertThat(application.getSuccessfulApplications(employerAlibaba, juniorJavaDevJob), is(1));
+        assertThat(application.appliedTemp.getSuccessfulApplications(employerAlibaba, seniorJavaDevJob), is(2));
+        assertThat(application.appliedTemp.getSuccessfulApplications(employerAlibaba, juniorJavaDevJob), is(1));
     }
 
     @Test

@@ -4,37 +4,34 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
-
-import static java.util.Map.Entry;
 
 public class Application {
     private final Jobs jobs = new Jobs();
     private final HashMap<String, List<List<String>>> applied = new HashMap<>();
     private final List<List<String>> failedApplications = new ArrayList<>();
-    private final Applied appliedTemp = new Applied();
+    final Applied appliedTemp = new Applied();
 
     public void execute(String command, Employer employer, Job job, JobSeeker jobSeeker, Resume resume, LocalDate applicationTime) throws NotSupportedJobTypeException, RequiresResumeForJReqJobException, InvalidResumeException {
        if(command=="publish")
-        executeTemp(Command.PUBLISH, employer, job, jobSeeker, resume, applicationTime);
+           publishJob(employer, job);
         if(command=="save")
-            executeTemp(Command.SAVE, employer, job, jobSeeker, resume, applicationTime);
+            saveJob(employer, job);
         if(command=="apply")
-            executeTemp(Command.APPLY, employer, job, jobSeeker, resume, applicationTime);
+            applyJobs(employer, job, jobSeeker, resume, applicationTime);
     }
 
-    public void executeTemp(Command command, Employer employer, Job job, JobSeeker jobSeeker, Resume resume, LocalDate applicationTime) throws NotSupportedJobTypeException, RequiresResumeForJReqJobException, InvalidResumeException {
-        if (command== Command.PUBLISH) {
-            jobs.publishJob(employer, job);
-        }
-        if (command == Command.SAVE) {
-            jobs.saveJob(employer, job);
-        }
-        if (command== Command.APPLY) {
-            applyJob(employer, job, jobSeeker, resume, applicationTime);
-        }
+
+    private void applyJobs(Employer employer, Job job, JobSeeker jobSeeker, Resume resume, LocalDate applicationTime) throws RequiresResumeForJReqJobException, InvalidResumeException {
+        applyJob(employer, job, jobSeeker, resume, applicationTime);
+    }
+
+    private void saveJob(Employer employer, Job job) {
+        jobs.saveJob(employer, job);
+    }
+
+    private void publishJob(Employer employer, Job job) throws NotSupportedJobTypeException {
+        jobs.publishJob(employer, job);
     }
 
     private void applyJob(Employer employer, Job job, JobSeeker jobSeeker, Resume resume, LocalDate applicationTime) throws RequiresResumeForJReqJobException, InvalidResumeException {
@@ -119,81 +116,6 @@ public class Application {
 
     }
 
-    public String export(String type, LocalDate date) {
-        if (type == "csv") {
-            return expotCsv(date);
-        }
-        return exportHtml(date);
-    }
-
-    private String exportHtml(LocalDate date) {
-
-        return "<!DOCTYPE html>"
-                + "<body>"
-                + "<table>"
-                + "<thead>"
-                + "<tr>"
-                + "<th>Employer</th>"
-                + "<th>Job</th>"
-                + "<th>Job Type</th>"
-                + "<th>Applicants</th>"
-                + "<th>Date</th>"
-                + "</tr>"
-                + "</thead>"
-                + "<tbody>"
-                + getHtmlContent(date, "")
-                + "</tbody>"
-                + "</table>"
-                + "</body>"
-                + "</html>";
-    }
-
-    private String getHtmlContent(LocalDate date, String content) {
-        Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Entry<String, List<List<String>>> set = iterator.next();
-            String applicant = set.getKey();
-            List<List<String>> jobs1 = set.getValue();
-            List<List<String>> appliedOnDate = jobs1.stream().filter(job -> job.get(2).equals(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).collect(Collectors.toList());
-
-            for (List<String> job : appliedOnDate) {
-                content = content.concat("<tr>" + "<td>" + job.get(3) + "</td>" + "<td>" + job.get(0) + "</td>" + "<td>" + job.get(1) + "</td>" + "<td>" + applicant + "</td>" + "<td>" + job.get(2) + "</td>" + "</tr>");
-            }
-        }
-        return content;
-    }
-
-
-    private String expotCsv(LocalDate date) {
-        return getCsvContent(date, "Employer,Job,Job Type,Applicants,Date" + "\n");
-    }
-
-    private String getCsvContent(LocalDate date, String result) {
-        Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Entry<String, List<List<String>>> set = iterator.next();
-            String applicant = set.getKey();
-            List<List<String>> jobs1 = set.getValue();
-            List<List<String>> appliedOnDate = jobs1.stream().filter(job -> job.get(2).equals(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")))).collect(Collectors.toList());
-
-            for (List<String> job : appliedOnDate) {
-                result = result.concat(job.get(3) + "," + job.get(0) + "," + job.get(1) + "," + applicant + "," + job.get(2) + "\n");
-            }
-        }
-        return result;
-    }
-
-    public int getSuccessfulApplications(String employerName, String jobName) {
-        int result = 0;
-        Iterator<Entry<String, List<List<String>>>> iterator = this.applied.entrySet().iterator();
-        while (iterator.hasNext()) {
-            Entry<String, List<List<String>>> set = iterator.next();
-            List<List<String>> jobs = set.getValue();
-
-            result += jobs.stream().anyMatch(job -> job.get(3).equals(employerName) && job.get(0).equals(jobName)) ? 1 : 0;
-        }
-        return result;
-    }
 
     public int getUnsuccessfulApplications(String employerName, String jobName) {
         return (int) failedApplications.stream().filter(job -> job.get(0).equals(jobName) && job.get(3).equals(employerName)).count();
