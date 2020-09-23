@@ -1,49 +1,50 @@
 package com.theladders.avital.cc;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class Applied {
-    private final HashMap<String, List<List<String>>> applied = new HashMap<>();
 
+    private final HashMap<String, List<Apply>> applied = new HashMap<>();
+
+    private final FailApplicationList failApplicationList=new FailApplicationList();
 
     public List<List<String>> findBy(String employerName) {
-        return applied.get(employerName);
+        applied.get(employerName).forEach(item-> ((List<List<String>>) new ArrayList<List<String>>()).add(item.asString()));
+        return new ArrayList<>();
     }
 
-    public Iterator<Map.Entry<String, List<List<String>>>> getIterator() {
+    public Iterator<Map.Entry<String, List<Apply>>> getIterator() {
         return this.applied.entrySet().iterator();
     }
 
-    public List<List<String>> getOrDefault(String jobSeekerName) {
-        return applied.getOrDefault(jobSeekerName, new ArrayList<>());
+    void applyCommand(String command,String employerName,String jobName,String jobType,String jobSeekerName,String resumeApplicantName,LocalDate applicationTime) throws RequiresResumeForJReqJobException, InvalidResumeException {
+
+        applyCommandTemp(command,new Apply(new Job(jobName,jobType),jobSeekerName,resumeApplicantName,applicationTime,employerName));
     }
 
-    public void store(String jobSeekerName, List<List<String>> saved) {
-        applied.put(jobSeekerName,saved);
-    }
-
-    void applyCommand(String command, String employerName, String jobName, String jobType, String jobSeekerName, String resumeApplicantName, LocalDate applicationTime, Application application) throws RequiresResumeForJReqJobException, InvalidResumeException {
+    void applyCommandTemp(String command,  Apply apply) throws RequiresResumeForJReqJobException, InvalidResumeException {
         if (command != "apply") {
             return;
         }
-        if (jobType.equals("JReq") && resumeApplicantName == null) {
-            application.failApplications.addFailApplication(employerName, jobName, jobType, applicationTime);
+        if (isRequiresResumeForJReqJob(apply)) {
+           failApplicationList.addFailApplication(apply);
             throw new RequiresResumeForJReqJobException();
         }
 
-        if (jobType.equals("JReq") && !resumeApplicantName.equals(jobSeekerName)) {
+        if (isInvalidResume(apply)) {
             throw new InvalidResumeException();
         }
-        List<List<String>> saved = getOrDefault(jobSeekerName);
-        saved.add(new ArrayList<String>() {{
-            add(jobName);
-            add(jobType);
-            add(applicationTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
-            add(employerName);
-        }});
-        store(jobSeekerName, saved);
+        List<Apply> saved = applied.getOrDefault(apply.jobSeekerName,new ArrayList<>());
+        saved.add(apply);
+        applied.put(apply.jobSeekerName,saved);
+    }
 
+    private boolean isInvalidResume(Apply apply) {
+        return apply.job.getJobType().equals("JReq") && ! apply.resumeApplicantName .equals(apply.jobSeekerName);
+    }
+
+    private boolean isRequiresResumeForJReqJob(Apply apply) {
+        return apply.job.getJobType().equals("JReq") && apply.resumeApplicantName == null;
     }
 }

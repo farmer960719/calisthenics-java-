@@ -23,9 +23,17 @@ public class Job {
 
     }
 
+    public String getJobType() {
+        return jobType;
+    }
+
     public void vailType() throws NotSupportedJobTypeException {
         if (!jobType.equals(J_REQ) && !jobType.equals(ATS)) {
             throw new NotSupportedJobTypeException();
         }
+    }
+
+    public String getJobName() {
+        return jobName;
     }
 }
